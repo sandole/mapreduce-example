@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - mapreduce_network
+
+  master:
+    build: .
+    volumes:
+      - ./input:/app/input
+      - ./output:/app/output
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: python master.py
+    depends_on:
+      - redis
+    networks:
+      - mapreduce_network
+
+  worker:
+    build: .
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: python worker.py
+    deploy:
+      replicas: 3
+    depends_on:
+      - redis
+      - master
+    networks:
+      - mapreduce_network
+
+networks:
+  mapreduce_network:
+    driver: bridge
