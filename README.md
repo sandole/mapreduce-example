@@ -1,217 +1,230 @@
-Python MapReduce Framework with Docker
+# Python MapReduce Framework with Docker
+
 A lightweight MapReduce implementation using Python and Docker, designed for learning and experimenting with distributed computing concepts. This framework allows you to run MapReduce jobs locally using multiple Docker containers as workers, coordinated through Redis.
-🌟 Features
 
-Distributed processing with multiple workers
-Redis-based coordination and data storage
-Docker containerization for easy deployment
-Scalable worker configuration
-Example word count implementation
-Extensible for custom MapReduce tasks
+## 🌟 Features
 
-🏗️ Architecture
-The system consists of three main components:
+- Distributed processing with multiple workers
+- Redis-based coordination and data storage
+- Docker containerization for easy deployment
+- Configurable chunk size for data processing
+- Detailed logging and error handling
+- Automatic retry logic for Redis connections
+- Progress monitoring for chunk processing
 
-Master Node
+## 🏗️ System Requirements
 
-Splits input data into chunks
-Distributes work to workers
-Coordinates the final result combination
+- Docker
+- Docker Compose
+- Git
+- 4GB RAM (minimum)
+- 10GB disk space
 
+## 🚀 Quick Start
 
-Worker Nodes
-
-Execute map and reduce tasks
-Process data chunks independently
-Scale horizontally for increased performance
-
-
-Redis
-
-Coordinates between master and workers
-Stores data chunks and intermediate results
-Manages the work queue
-
-
-
-📋 Prerequisites
-
-Docker
-Docker Compose
-Python 3.9 or higher (for local development)
-Git
-
-🚀 Getting Started
-
-Clone the repository:
-
-bashCopygit clone <repository-url>
+1. Clone the repository:
+```bash
+git clone 
 cd python-mapreduce
+```
 
-Create input and output directories:
+2. Create required directories and sample input:
+```bash
+# Create directories
+mkdir -p input output
+chmod -R 777 output  # Ensure write permissions
 
-bashCopymkdir input output
+# Create a sample input file
+echo "This is a test file." > input/input.txt
+echo "It contains some text for testing." >> input/input.txt
+```
 
-Add some input data:
+3. Build and run the system:
+```bash
+docker-compose up --build
+```
 
-bashCopyecho "This is a sample text file for testing MapReduce." > input/input.txt
-echo "Add more text files as needed for processing." > input/input2.txt
+## 📊 Project Structure
 
-Build and start the containers:
-
-bashCopydocker-compose up --build
-📊 Project Structure
-Copypython-mapreduce/
+```
+python-mapreduce/
 ├── docker-compose.yml
 ├── Dockerfile
 ├── requirements.txt
 ├── README.md
+├── input/
+│   └── input.txt
+├── output/
+│   └── results.json
 └── word_counter/
     ├── __init__.py
     ├── mapper.py
     ├── reducer.py
     ├── worker.py
     └── master.py
-🔧 Configuration
-Scaling Workers
-Modify the docker-compose.yml file to adjust the number of workers:
-yamlCopyworker:
-  deploy:
-    replicas: 3  # Change this number to scale workers
-Chunk Size
-Adjust the chunk size in master.py:
-pythonCopymaster = Master("input.txt", chunk_size=1000)  # Modify chunk_size as needed
-🎯 Example: Word Count
-The default implementation includes a word count example. Here's how it works:
+```
 
-Map Phase
+## 🔧 Configuration
 
-Input text is split into words
-Each word occurrence is counted
-Intermediate results are stored in Redis
+### Docker Compose Configuration
+The system uses three services:
+- Redis: For coordination and data storage
+- Master: Manages job distribution and result collection
+- Workers: Process data chunks in parallel
 
+```yaml
+services:
+  redis:
+    image: redis:latest
+  master:
+    build: .
+    volumes:
+      - ./input:/app/input:ro
+      - ./output:/app/output:rw
+  worker:
+    deploy:
+      replicas: 3  # Number of parallel workers
+```
 
-Reduce Phase
+### Processing Configuration
 
-Word counts from all chunks are combined
-Final totals are calculated
-Results are saved to output
+Adjust the chunk size in `master.py` to control data distribution:
+```python
+master = Master(input_file, chunk_size=2)  # Smaller chunks for testing
+```
 
+## 📝 Example Output
 
-
-🛠️ Creating Custom MapReduce Jobs
-
-Create a new mapper by extending the base Mapper class:
-
-pythonCopyclass CustomMapper(Mapper):
-    def map(self, line):
-        # Implement your mapping logic
-        pass
-
-Create a new reducer by extending the base Reducer class:
-
-pythonCopyclass CustomReducer(Reducer):
-    def reduce(self, key, values):
-        # Implement your reduction logic
-        pass
-📝 Example Output
-Word count results will look like this:
-jsonCopy{
+The system generates a JSON file with word counts:
+```json
+{
   "this": 1,
   "is": 1,
   "a": 1,
-  "sample": 1,
-  "text": 2,
-  "file": 2,
+  "test": 2,
+  "file": 1,
+  "it": 1,
+  "contains": 1,
+  "some": 1,
+  "text": 1,
   "for": 1,
-  "testing": 1,
-  "mapreduce": 1
+  "testing": 1
 }
-🔍 Monitoring
-Monitor your MapReduce job:
+```
 
-Check worker logs:
+## 🔍 Monitoring
 
-bashCopydocker-compose logs -f worker
+1. View real-time logs:
+```bash
+docker-compose logs -f
+```
 
-Check Redis status:
+2. Monitor specific services:
+```bash
+docker-compose logs -f master   # Monitor master
+docker-compose logs -f worker   # Monitor workers
+docker-compose logs -f redis    # Monitor Redis
+```
 
-bashCopydocker exec -it python-mapreduce_redis_1 redis-cli
-🐞 Troubleshooting
-Common issues and solutions:
+## 🐞 Troubleshooting
 
-Workers not processing data:
+### Common Issues and Solutions
 
-Check Redis connection
-Verify input file permissions
-Review worker logs
+1. **No output generated:**
+   - Check output directory permissions: `chmod -R 777 output`
+   - Verify Redis connection in logs
+   - Ensure input file exists and is readable
 
+2. **Workers exit immediately:**
+   - Check Redis logs for connection issues
+   - Verify network connectivity between containers
+   - Check for errors in worker logs
 
-Slow processing:
+3. **Processing hangs:**
+   - Check if all workers are running: `docker-compose ps`
+   - Verify chunk processing progress in logs
+   - Check Redis memory usage
 
-Increase number of workers
-Adjust chunk size
-Monitor Redis memory usage
+4. **Redis connection issues:**
+   - Ensure Redis is running: `docker-compose ps redis`
+   - Check Redis logs for errors
+   - Verify Redis port configuration
 
+### Debug Commands
 
+```bash
+# Check container status
+docker-compose ps
 
-🤝 Contributing
+# Check Redis connectivity
+docker-compose exec redis redis-cli ping
 
-Fork the repository
-Create a feature branch
-Commit your changes
-Push to the branch
-Create a Pull Request
+# View Redis data
+docker-compose exec redis redis-cli keys "*"
 
-📄 License
-This project is licensed under the MIT License - see the LICENSE file for details.
-✨ Advanced Usage
-Custom Input Formats
-Modify the master's split_input method to handle different input formats:
-pythonCopydef split_input(self):
-    # Implement custom input parsing
-    pass
-Custom Output Formats
-Modify the master's combine_results method to format output differently:
-pythonCopydef combine_results(self):
-    # Implement custom output formatting
-    pass
-Performance Optimization
+# Restart specific service
+docker-compose restart worker
 
-Memory Management:
+# Reset entire system
+docker-compose down
+docker-compose up --build
+```
 
-Adjust chunk sizes based on data characteristics
-Implement batch processing in workers
-Use Redis pipeline operations
+## 🛠️ Creating Custom MapReduce Jobs
 
+1. Extend the base Mapper class:
+```python
+class CustomMapper(Mapper):
+    def map(self, line):
+        # Custom mapping logic
+        pass
+```
 
-Processing Speed:
+2. Extend the base Reducer class:
+```python
+class CustomReducer(Reducer):
+    def reduce(self, key, values):
+        # Custom reduction logic
+        pass
+```
 
-Implement data preprocessing
-Use efficient data structures
-Optimize map/reduce functions
+## 🔄 Development Workflow
 
+1. Make code changes in the `word_counter` directory
+2. Rebuild and restart the system:
+```bash
+docker-compose down
+docker-compose up --build
+```
 
+## 📦 Production Considerations
 
-🎓 Learning Resources
-To learn more about MapReduce:
+1. **Data Persistence:**
+   - Mount Redis data volume for persistence
+   - Implement checkpoint mechanism for long-running jobs
 
-Read the original MapReduce paper by Google
-Experiment with different types of problems:
+2. **Scaling:**
+   - Adjust worker replicas based on workload
+   - Monitor Redis memory usage
+   - Consider implementing worker queue management
 
-Text processing
-Log analysis
-Data aggregation
-Graph processing
+3. **Security:**
+   - Implement Redis authentication
+   - Use secure networking between containers
+   - Implement proper access controls
 
+## 🤝 Contributing
 
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-🚧 Future Improvements
+## 🙏 Acknowledgments
 
-Add support for multiple input formats
-Implement fault tolerance
-Add progress monitoring
-Create a web interface for job management
-Add support for custom partitioning strategies
+- Inspired by Google's MapReduce paper
+- Built with Python, Redis, and Docker
+- Community contributions welcome
 
-For questions or issues, please open a GitHub issue in the repository.
+For questions or issues, please open a GitHub issue in the repository

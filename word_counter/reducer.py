@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 class Reducer:
     def __init__(self):
         self.word_counts = defaultdict(int)

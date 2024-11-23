@@ -1,5 +1,3 @@
-import sys
-import json
 from collections import defaultdict
 
 class Mapper:
@@ -10,7 +8,6 @@ class Mapper:
         """Map function that counts words in a line."""
         words = line.strip().lower().split()
         for word in words:
-            # Remove punctuation
             word = ''.join(c for c in word if c.isalnum())
             if word:
                 self.word_counts[word] += 1
