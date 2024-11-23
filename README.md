@@ -24,7 +24,7 @@ A lightweight MapReduce implementation using Python and Docker, designed for lea
 
 1. Clone the repository:
 ```bash
-git clone 
+git clone https://github.com/sandole/mapreduce-example
 cd python-mapreduce
 ```
 
